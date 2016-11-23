@@ -14,13 +14,11 @@ def mvhermgauss(means, covs, H, D):
         :return: eval_locations (H**DxNxD), weights (H**D)
         """
         N = tf.shape(means)[0]
-        #gh_x, gh_w = GPflow.kernels.hermgauss(H)
         gh_x, gh_w = GPflow.likelihoods.hermgauss(H)
         xn = np.array(list(itertools.product(*(gh_x,) * D)))  # H**DxD
         wn = np.prod(np.array(list(itertools.product(*(gh_w,) * D))), 1)  # H**D
         cholXcov = tf.cholesky(covs)  # NxDxD
-        X = 2.0 ** 0.5 * tf.batch_matmul(cholXcov, tf.tile(xn[None, :, :], (N, 1, 1)),
-                                         adj_y=True) + tf.expand_dims(means, 2)  # NxDxH**D
+        X = 2.0 ** 0.5 * tf.batch_matmul(cholXcov, tf.tile(xn[None, :, :], (N, 1, 1)), adj_y=True) + tf.expand_dims(means, 2)  # NxDxH**D
         Xr = tf.reshape(tf.transpose(X, [2, 0, 1]), (-1, D))  # H**DxNxD
         return Xr, wn * np.pi ** (-D * 0.5)
 
