@@ -1,7 +1,7 @@
-import GPflow
+import GPflow 
 import tensorflow as tf
 import numpy as np
-import itertools
+import itertools #The module standardizes a core set of fast, memory efficient tools.
 
 
 def mvhermgauss(means, covs, H, D):
