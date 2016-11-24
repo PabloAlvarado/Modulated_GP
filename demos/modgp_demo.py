@@ -3,20 +3,20 @@ from matplotlib import pyplot as plt
 import modgp
 import GPflow
 
-#%%
+#%% 
 def logistic(x):
     return 1./(1+ np.exp(-x))
 
-#%%    
+#%%   
 X = np.linspace(0, 1, 2000).reshape(-1, 1) # (-1, 1) means any number of necessay rows and  1 column
 k1 = GPflow.kernels.Matern12(input_dim=1, lengthscales=0.01)
 k2 = GPflow.kernels.Matern52(input_dim=1, lengthscales=0.1, variance=10.)
 
-#%%
+#%% calculate cov matrices
 K1 = k1.compute_K_symm(X)
 K2 = k2.compute_K_symm(X)
 
-#%%
+#%% sample f and g, transform g and generate the "observed" data y.
 noise_var = 0.001
 np.random.seed(1)
 f = np.random.multivariate_normal(np.zeros(X.shape[0]), K1).reshape(-1, 1)
@@ -24,14 +24,16 @@ g = np.random.multivariate_normal(np.zeros(X.shape[0]), K2).reshape(-1, 1)
 mean = f * logistic(g)
 y = mean + np.random.randn(*mean.shape) * np.sqrt(noise_var)
 
-#%%
+#%% plot the latent functions f(t) and \sigma(g(t)), plot the observed variable y(t)
+plt.figure()
 plt.plot(X, f, 'b')
 plt.plot(X, logistic(g), 'g', lw=2)
 plt.figure()
 plt.plot(X, y, 'b')
 
-#%%
-m = modgp.ModGP(X, y, k1, k2, X[::8].copy())
+#%% generate model object
+Z = X[::8].copy() # inducting points
+m = modgp.ModGP(X, y, k1, k2, Z) # X -> input variable, y -> observed data, k1,k2 -> kernels, Z -> inducting points
 
 #%%
 m.kern1.fixed = True
