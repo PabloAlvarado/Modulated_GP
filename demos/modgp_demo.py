@@ -32,7 +32,7 @@ plt.figure()
 plt.plot(X, y, 'b')
 
 #%% generate model object
-Z = X[::8].copy() # inducting points
+Z = X[::8].copy() # copy inducting points from input vector X
 m = modgp.ModGP(X, y, k1, k2, Z) # X -> input variable, y -> observed data, k1,k2 -> kernels, Z -> inducting points
 
 #%% keep model parameters fixed.
