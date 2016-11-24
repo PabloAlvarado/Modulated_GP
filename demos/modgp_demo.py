@@ -10,7 +10,7 @@ def logistic(x):
 #%%    
 X = np.linspace(0, 1, 2000).reshape(-1, 1) # (-1, 1) means any number of necessay rows and  1 column
 k1 = GPflow.kernels.Matern12(input_dim=1, lengthscales=0.01)
-k2 = GPflow.kernels.Matern52(input_dim=1, lengthscales=0.1, variance=10)
+k2 = GPflow.kernels.Matern52(input_dim=1, lengthscales=0.1, variance=10.)
 
 #%%
 K1 = k1.compute_K_symm(X)
