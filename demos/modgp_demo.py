@@ -35,16 +35,16 @@ plt.plot(X, y, 'b')
 Z = X[::8].copy() # inducting points
 m = modgp.ModGP(X, y, k1, k2, Z) # X -> input variable, y -> observed data, k1,k2 -> kernels, Z -> inducting points
 
-#%%
+#%% keep model parameters fixed.
 m.kern1.fixed = True
 m.kern2.fixed = True
 m.likelihood.noise_var = noise_var
 m.likelihood.noise_var.fixed = True
 
-#%%
+#%% optimize the approximated distributions over f(t) and g(t).
 m.optimize(disp=1,maxiter=10)
 
-#%%
+#%% evaluate predictions
 mu, var = m.predict_f(X)
 plt.plot(X, mu, 'b')
 plt.plot(X, mu + 2*np.sqrt(var), 'b--')
