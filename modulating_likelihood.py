@@ -13,14 +13,15 @@ def mvhermgauss(means, covs, H, D):
         :param D: Number of input dimensions. Needs to be known at call-time.
         :return: eval_locations (H**DxNxD), weights (H**D)
         """
-        N = tf.shape(means)[0]
-        gh_x, gh_w = GPflow.likelihoods.hermgauss(H)
-        xn = np.array(list(itertools.product(*(gh_x,) * D)))  # H**DxD
-        wn = np.prod(np.array(list(itertools.product(*(gh_w,) * D))), 1)  # H**D
-        cholXcov = tf.cholesky(covs)  # NxDxD
+        N = tf.shape(means)[0] 
+        gh_x, gh_w = GPflow.likelihoods.hermgauss(H) # calculate H HerGaus-cuadrature evaluation points and its corresponding weights
+        xn = np.array(list(itertools.product(*(gh_x,) * D)))  # H**DxD #expand 1 dimensional grid (evaluation points) to D dimensions. 
+        wn = np.prod(np.array(list(itertools.product(*(gh_w,) * D))), 1)  # H**D #expand weights to the new grid
+        cholXcov = tf.cholesky(covs)  # NxDxD #get cholesky decomposition of the cov matrix
         X = 2.0 ** 0.5 * tf.batch_matmul(cholXcov, tf.tile(xn[None, :, :], (N, 1, 1)), adj_y=True) + tf.expand_dims(means, 2)#NxDxH**D
         Xr = tf.reshape(tf.transpose(X, [2, 0, 1]), (-1, D))  # H**DxNxD
-        return Xr, wn * np.pi ** (-D * 0.5)
+        # the 2 lines above rescale the grid xn taking into acount the mean vector and cov matrix of the Gaussian distribution
+        return Xr, wn * np.pi ** (-D * 0.5) # return the rescaled weights and evaluation locations.
 
 
 class ModLik(GPflow.likelihoods.Likelihood):
