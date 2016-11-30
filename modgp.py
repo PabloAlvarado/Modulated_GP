@@ -9,7 +9,8 @@ from modulating_likelihood import ModLik
 class ModGP(GPflow.model.Model):
     def __init__(self, X, Y, kern1, kern2, kern3, kern4, kern5, Z):
         GPflow.model.Model.__init__(self)
-        self.X, self.Y, self.kern1, self.kern2, self.kern3, self.kern4, self.kern5 = X, Y, kern1, kern2, kern3, kern4, kern5
+        self.X, self.Y = X, Y
+        self.kern1, self.kern2, self.kern3, self.kern4, self.kern5 =  kern1, kern2, kern3, kern4, kern5
         self.likelihood = ModLik()
         self.Z = Z
         self.num_inducing = Z.shape[0]
@@ -62,8 +63,8 @@ class ModGP(GPflow.model.Model):
         fmean5, fvar5 = GPflow.conditionals.conditional(self.X, self.Z, self.kern5, self.q_mu5,
                                                         q_sqrt=self.q_sqrt5, full_cov=False, whiten=False)
         
-        fmean, fvar = tf.concat(1, [fmean1, fmean2, fmean3, fmean4, fmean5]), tf.concat(1, [fvar1, fvar2, fvar3, fvar4, fvar5])
-
+        fmean = tf.concat(1, [fmean1, fmean2, fmean3, fmean4, fmean5])
+        fvar  = tf.concat(1, [fvar1, fvar2, fvar3, fvar4, fvar5])
         # Get variational expectations.
         var_exp = self.likelihood.variational_expectations(fmean, fvar, self.Y)
 
@@ -74,28 +75,30 @@ class ModGP(GPflow.model.Model):
         return tf.reduce_sum(var_exp) * scale - KL
     
     @GPflow.param.AutoFlow((tf.float64, [None, None]))
-    def predict_f(self, Xnew):
+    def predict_f1(self, Xnew):
         return GPflow.conditionals.conditional(Xnew, self.Z, self.kern1, self.q_mu1,
                                                q_sqrt=self.q_sqrt1, full_cov=False, whiten=False)
     
     @GPflow.param.AutoFlow((tf.float64, [None, None]))
-    def predict_g(self, Xnew):
+    def predict_f2(self, Xnew):
         return GPflow.conditionals.conditional(Xnew, self.Z, self.kern2, self.q_mu2,
                                                q_sqrt=self.q_sqrt2, full_cov=False, whiten=False)
     
     @GPflow.param.AutoFlow((tf.float64, [None, None]))
-    def predict_h(self, Xnew):
+    def predict_g1(self, Xnew):
         return GPflow.conditionals.conditional(Xnew, self.Z, self.kern3, self.q_mu3,
                                                q_sqrt=self.q_sqrt3, full_cov=False, whiten=False)
-
+    
     @GPflow.param.AutoFlow((tf.float64, [None, None]))
-    def predict_k(self, Xnew):
+    def predict_g2(self, Xnew):
         return GPflow.conditionals.conditional(Xnew, self.Z, self.kern4, self.q_mu4,
                                                q_sqrt=self.q_sqrt4, full_cov=False, whiten=False)
-                                               
+
     @GPflow.param.AutoFlow((tf.float64, [None, None]))
-    def predict_f2(self, Xnew):
+    def predict_g3(self, Xnew):
         return GPflow.conditionals.conditional(Xnew, self.Z, self.kern5, self.q_mu5,
                                                q_sqrt=self.q_sqrt5, full_cov=False, whiten=False)
+                                               
+
 
 
