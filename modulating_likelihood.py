@@ -31,12 +31,15 @@ class ModLik(GPflow.likelihoods.Likelihood):
         self.noise_var = GPflow.param.Param(1.0)
 
     def logp(self, F, Y):
-        f, g, h, k, f2 = F[:, 0], F[:, 1], F[:,2], F[:,3], F[:,4]
+        f1, f2, g1, g2, g3 = F[:, 0], F[:, 1], F[:,2], F[:,3], F[:,4]
         y = Y[:, 0]
-        sigma_g = (tf.exp(g))/(tf.exp(h) + tf.exp(g) + tf.exp(k))  # squash g to be positive
-        sigma_h = (tf.exp(h))/(tf.exp(h) + tf.exp(g) + tf.exp(k))  # squash g to be positive
-        sigma_k = (tf.exp(k))/(tf.exp(h) + tf.exp(g) + tf.exp(k))  # squash g to be positive
-        mean = sigma_g * f + sigma_h*0 + f2*sigma_k
+        
+        Nor = tf.exp(g1) + tf.exp(g2) + tf.exp(g3) #normalizer
+        sigma_g1 = tf.exp(g1) / Nor  # squash g to be positive
+        sigma_g2 = tf.exp(g2) / Nor  # squash g to be positive
+        sigma_g3 = tf.exp(g3) / Nor  # squash g to be positive
+        
+        mean = sigma_g1 * f1 + sigma_g2 * f2 + sigma_g3 * 0
         return GPflow.densities.gaussian(y, mean, self.noise_var).reshape(-1, 1)
 
     def variational_expectations(self, Fmu, Fvar, Y):
@@ -44,12 +47,14 @@ class ModLik(GPflow.likelihoods.Likelihood):
         H = 5 # number of Gauss-Hermite evaluation points.
         Xr, w = mvhermgauss(Fmu, tf.matrix_diag(Fvar), H, D)
         w = tf.reshape(w, [-1, 1])
-        f, g, h, k, f2 = Xr[:, 0], Xr[:, 1], Xr[:, 2], Xr[:, 3], Xr[:, 4]
+        f1, f2, g1, g2, g3 = Xr[:, 0], Xr[:, 1], Xr[:, 2], Xr[:, 3], Xr[:, 4]
         y = tf.tile(Y, [H**D, 1])[:, 0]
-        sigma_g = tf.exp(g)/(tf.exp(h) + tf.exp(g) + tf.exp(k))  # squash g to be positive
-        sigma_h = tf.exp(h)/(tf.exp(h) + tf.exp(g) + tf.exp(k))  # squash g to be positive
-        sigma_k = tf.exp(k)/(tf.exp(h) + tf.exp(g) + tf.exp(k))  # squash g to be positive
-        mean = f * sigma_g + sigma_h*0 + f2*sigma_k
+        Nor = tf.exp(g1) + tf.exp(g2) + tf.exp(g3) #normalizer
+        sigma_g1 = tf.exp(g1) / Nor # squash g to be positive
+        sigma_g2 = tf.exp(g2) / Nor  # squash g to be positive
+        sigma_g3 = tf.exp(g3) / Nor  # squash g to be positive
+        
+        mean =  sigma_g1 * f1 + sigma_g2 * f2 + sigma_g3 * 0
         evaluations = GPflow.densities.gaussian(y, mean, self.noise_var)
         evaluations = tf.transpose(tf.reshape(evaluations, tf.pack([tf.size(w), tf.shape(Fmu)[0]])))
         return tf.matmul(evaluations, w)
